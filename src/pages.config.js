@@ -52,6 +52,7 @@ import Admin from './pages/Admin';
 import Campaigns from './pages/Campaigns';
 import Events from './pages/Events';
 import Home from './pages/Home';
+import LinkAccount from './pages/LinkAccount';
 import MemberProfile from './pages/MemberProfile';
 import Recruitment from './pages/Recruitment';
 import Roster from './pages/Roster';
@@ -65,6 +66,7 @@ export const PAGES = {
     "Campaigns": Campaigns,
     "Events": Events,
     "Home": Home,
+    "LinkAccount": LinkAccount,
     "MemberProfile": MemberProfile,
     "Recruitment": Recruitment,
     "Roster": Roster,
