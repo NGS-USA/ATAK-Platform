@@ -209,5 +209,3 @@ setPermissions(perms[0] || null);
   );
 }
 }
-
-export default Events;
