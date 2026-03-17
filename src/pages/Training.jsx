@@ -4,7 +4,6 @@ import { db } from "@/api/apiClient";
 import { BookOpen, Plus, Check, Search } from "lucide-react";
 import { format } from "date-fns";
 import { QUALIFICATIONS } from "../components/constants/qualifications";
-import { useUser } from "@clerk/clerk-react";
 
 export default function Training() {
   const [records, setRecords] = useState([]);
@@ -21,21 +20,13 @@ export default function Training() {
   useEffect(() => { load(); }, []);
 
   const load = async () => {
-  try {
-    const [m, r] = await Promise.all([
-      db.filter('Member', { status: 'Active' }),
-      db.list('TrainingRecord', '-training_date', 30),
-    ]);
-    setRecords(r);
-    setMembers(m);
-  } catch (err) {
-    console.error("Failed to load training data:", err);
-  }
-  setLoading(false);
-};
+    try {
+      const [m, r] = await Promise.all([
+        db.filter('Member', { status: 'Active' }),
+        db.list('TrainingRecord', '-training_date', 30),
+      ]);
       setRecords(r);
       setMembers(m);
-      setUser(u);
     } catch (err) {
       console.error("Failed to load training data:", err);
     }
@@ -46,14 +37,14 @@ export default function Training() {
 
   const save = async () => {
     await db.create('TrainingRecord', {
-  ...form,
-  trainer_name: user?.fullName || user?.primaryEmailAddress?.emailAddress,
-  trainer_id: user?.id,
-  passed_members: selectedPassed.map(n => members.find(m => m.unit_name === n)?.id).filter(Boolean),
-  failed_members: selectedFailed.map(n => members.find(m => m.unit_name === n)?.id).filter(Boolean),
-  passed_names: selectedPassed,
-  failed_names: selectedFailed,
-});
+      ...form,
+      trainer_name: user?.fullName || user?.primaryEmailAddress?.emailAddress,
+      trainer_id: user?.id,
+      passed_members: selectedPassed.map(n => members.find(m => m.unit_name === n)?.id).filter(Boolean),
+      failed_members: selectedFailed.map(n => members.find(m => m.unit_name === n)?.id).filter(Boolean),
+      passed_names: selectedPassed,
+      failed_names: selectedFailed,
+    });
     setShowForm(false);
     setSelectedPassed([]);
     setSelectedFailed([]);
