@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useUser } from "@clerk/clerk-react";
 import { db } from "@/api/apiClient";
 import { Shield, AlertTriangle, Plus, Save, Activity } from "lucide-react";
 import { logAction } from "../components/auditLog";
