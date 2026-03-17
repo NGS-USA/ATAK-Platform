@@ -30,10 +30,10 @@ export default function About() {
     <div style={{ maxWidth: "900px", margin: "0 auto", padding: "3rem 1rem" }}>
       {/* Hero */}
       <div style={{ textAlign: "center", marginBottom: "4rem" }}>
-        <div style={{ width: "80px", height: "80px", background: logoUrl ? "transparent" : `linear-gradient(135deg, ${accentColor}, #16a34a)`, borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem", overflow: "hidden", border: logoUrl ? "1px solid var(--border)" : "none" }}>
+        <div style={{ width: "200px", height: "200px", background: logoUrl ? "transparent" : `linear-gradient(135deg, ${accentColor}, #16a34a)`, borderRadius: "24px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem", overflow: "hidden", border: logoUrl ? "1px solid var(--border)" : "none" }}>
           {logoUrl
-            ? <img src={logoUrl} alt="Unit Logo" style={{ width: "100%", height: "100%", objectFit: "contain", padding: "6px" }} />
-            : <Shield size={40} color="#000" />
+            ? <img src={logoUrl} alt="Unit Logo" style={{ width: "100%", height: "100%", objectFit: "contain", padding: "12px" }} />
+            : <Shield size={100} color="#000" />
           }
         </div>
         <h1 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "1rem", letterSpacing: "-0.02em" }}>{unitName}</h1>
