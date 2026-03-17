@@ -30,21 +30,23 @@ const AuthenticatedApp = () => {
   // Allow recruitment page without being a registered member
   const isRecruitmentPage = window.location.pathname === '/Recruitment';
   const isLinkPage = window.location.pathname === '/LinkAccount';
+  const isAboutPage = window.location.pathname === '/About';
+  const isPublicPage = isRecruitmentPage || isLinkPage || isAboutPage;
 
-  // If not signed in at all, show the access restricted page
-  // (except on Recruitment and LinkAccount pages)
-  if (!isLoadingAuth && !isAuthenticated && !isRecruitmentPage && !isLinkPage) {
-    return <UserNotRegisteredError />;
+  // Determine if this visitor is unauthenticated or unregistered
+  const isBlocked =
+    (!isLoadingAuth && !isAuthenticated) ||
+    (authError?.type === 'user_not_registered');
+
+  // If blocked and trying to visit the root / home, redirect to About
+  if (isBlocked && window.location.pathname === '/') {
+    window.location.href = '/About';
+    return null;
   }
 
-  // If signed in but no linked member record, show access restricted
-  if (authError && !isRecruitmentPage && !isLinkPage) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      navigateToLogin();
-      return null;
-    }
+  // If blocked and trying to visit any protected page, show Access Restricted
+  if (isBlocked && !isPublicPage) {
+    return <UserNotRegisteredError />;
   }
 
   // Render the main app
