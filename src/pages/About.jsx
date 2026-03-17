@@ -19,7 +19,7 @@ export default function About() {
         <div style={{ width: "80px", height: "80px", background: "linear-gradient(135deg, var(--accent), #16a34a)", borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem" }}>
           <Shield size={40} color="#000" />
         </div>
-        <h1 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "1rem", letterSpacing: "-0.02em" }}>Task Force HQ</h1>
+        <h1 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "1rem", letterSpacing: "-0.02em" }}>Serpant Tactical Solutions</h1>
         <p style={{ color: "var(--text-secondary)", fontSize: "1.1rem", maxWidth: "600px", margin: "0 auto 2rem", lineHeight: 1.7 }}>
           An elite Arma Reforger milsim unit dedicated to tactical excellence, brotherhood, and realistic military simulation. We operate with discipline, structure, and a commitment to immersive gameplay.
         </p>

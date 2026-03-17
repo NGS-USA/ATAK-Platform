@@ -76,7 +76,7 @@ export default function Layout({ children, currentPageName }) {
       <nav style={{ backgroundColor: darkMode ? bgSecondary : "#ffffff", borderBottom: `1px solid ${lightBorder}`, position: "sticky", top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", height: "60px" }}>
           {/* Logo */}
-          <Link to={createPageUrl("Home")} style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
+          <Link to={createPageUrl("About")} style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
             <div style={{ width: "36px", height: "36px", background: theme?.unit_logo_url ? "transparent" : `linear-gradient(135deg, ${accentPrimary}, ${theme?.accent_secondary || "#22c55e"})`, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
               {theme?.unit_logo_url ? <img src={theme.unit_logo_url} alt="Unit Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <Shield size={20} color="#000" />}
             </div>
