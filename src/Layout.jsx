@@ -37,7 +37,20 @@ export default function Layout({ children, currentPageName }) {
   const textPrimary = theme?.text_primary || "#f1f5f9";
   const textSecondary = theme?.text_secondary || "#94a3b8";
   const borderColor = theme?.border_color || "#1e2530";
-  const unitName = theme?.unit_name || "Task Force HQ";
+  const unitName = theme?.unit_name || "Serpant Tactical Solutions";
+  const pageBackgrounds = {
+    Home: theme?.bg_home,
+    Roster: theme?.bg_roster,
+    Events: theme?.bg_events,
+    Campaigns: theme?.bg_campaigns,
+    Training: theme?.bg_training,
+    Recruitment: theme?.bg_recruitment,
+    About: theme?.bg_about,
+    Admin: theme?.bg_admin,
+    MemberProfile: theme?.bg_roster,
+  };
+
+  const currentBg = pageBackgrounds[currentPageName];
 
   const navItems = [
     { label: "Dashboard", page: "Home", icon: Home },
@@ -56,7 +69,18 @@ export default function Layout({ children, currentPageName }) {
   const lightBorder = darkMode ? borderColor : "#e2e8f0";
 
   return (
-    <div style={{ backgroundColor: lightBg, color: lightText, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
+    <div style={{
+      backgroundColor: lightBg,
+      color: lightText,
+      minHeight: "100vh",
+      fontFamily: "'Inter', sans-serif",
+      ...(currentBg && {
+        backgroundImage: `url(${currentBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      })
+    }}>
       <style>{`
         :root {
           --accent: ${accentPrimary};
@@ -166,7 +190,10 @@ export default function Layout({ children, currentPageName }) {
       </nav>
 
       {/* Page Content */}
-      <main style={{ maxWidth: "1400px", margin: "0 auto", padding: "1.5rem" }}>
+      {currentBg && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 0, pointerEvents: "none" }} />
+      )}
+      <main style={{ maxWidth: "1400px", margin: "0 auto", padding: "1.5rem", position: "relative", zIndex: 1 }}>
         {children}
       </main>
 

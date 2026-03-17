@@ -38,7 +38,7 @@ export default function About() {
         </div>
         <h1 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "1rem", letterSpacing: "-0.02em" }}>{unitName}</h1>
         <p style={{ color: "var(--text-secondary)", fontSize: "1.1rem", maxWidth: "600px", margin: "0 auto 2rem", lineHeight: 1.7 }}>
-          An elite Arma Reforger milsim unit dedicated to tactical excellence, brotherhood, and realistic military simulation. We operate with discipline, structure, and a commitment to immersive gameplay.
+          {theme?.unit_tagline || "An elite Arma Reforger milsim unit dedicated to tactical excellence, brotherhood, and realistic military simulation."}
         </p>
         <button
           onClick={handleJoinClick}
