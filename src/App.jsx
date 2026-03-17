@@ -29,9 +29,16 @@ const AuthenticatedApp = () => {
 
   // Allow recruitment page without being a registered member
   const isRecruitmentPage = window.location.pathname === '/Recruitment';
+  const isLinkPage = window.location.pathname === '/LinkAccount';
 
-  // Handle authentication errors
-  if (authError && !isRecruitmentPage) {
+  // If not signed in at all, show the access restricted page
+  // (except on Recruitment and LinkAccount pages)
+  if (!isLoadingAuth && !isAuthenticated && !isRecruitmentPage && !isLinkPage) {
+    return <UserNotRegisteredError />;
+  }
+
+  // If signed in but no linked member record, show access restricted
+  if (authError && !isRecruitmentPage && !isLinkPage) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
