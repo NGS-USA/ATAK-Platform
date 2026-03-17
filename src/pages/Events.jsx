@@ -208,3 +208,5 @@ setPermissions(perms[0] || null);
     </div>
   );
 }
+
+export default Events;
