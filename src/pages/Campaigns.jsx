@@ -6,15 +6,16 @@ import { format } from "date-fns";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import ReactMarkdown from "react-markdown";
+import { useUser } from "@clerk/clerk-react";
 
 const statusColors = { Active: "#4ade80", Completed: "#94a3b8", Paused: "#f59e0b" };
 
 export default function Campaigns() {
+  const { user } = useUser();
   const [campaigns, setCampaigns] = useState([]);
   const [events, setEvents] = useState([]);
   const [aars, setAars] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [expanded, setExpanded] = useState({});
@@ -30,7 +31,6 @@ export default function Campaigns() {
 ]);
     const order = { Active: 0, Paused: 1, Completed: 2 };
     setCampaigns(c.sort((a, b) => (order[a.status] ?? 99) - (order[b.status] ?? 99)));
-    setUser(u);
     setEvents(e);
     setAars(a);
     setLoading(false);
@@ -42,7 +42,7 @@ export default function Campaigns() {
     return { total: linked.length, completed: completed.length };
   };
 
-  const canEdit = user?.role === "admin";
+  const canEdit = user?.publicMetadata?.role === "admin";
 
   const save = async () => {
     if (editing) {

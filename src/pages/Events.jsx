@@ -8,15 +8,16 @@ import { logAction } from "../components/auditLog";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import ReactMarkdown from "react-markdown";
+import { useUser } from "@clerk/clerk-react";
 
 const typeColors = { Operation: "#3b82f6", Training: "#f59e0b", Meeting: "#8b5cf6", Other: "#64748b" };
 const statusColors = { Upcoming: "#4ade80", Active: "#f59e0b", Completed: "#94a3b8", Cancelled: "#ef4444" };
 
 export default function Events() {
+  const { user } = useUser();
   const [events, setEvents] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
   const [currentMember, setCurrentMember] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -31,20 +32,20 @@ export default function Events() {
 
   const load = async () => {
     const [evts, c, perms] = await Promise.all([
-  db.list('Event', 'date', 100),
-  db.list('Campaign'),
-  db.filter('PermissionConfig', { section: 'AAR' }),
-]);
-setEvents(evts);
-setCampaigns(c);
-setPermissions(perms[0] || null);
-// user comes from Clerk's useUser() — add at top of component:
-// const { user } = useUser();
+      db.list('Event', 'date', 100),
+      db.list('Campaign'),
+      db.filter('PermissionConfig', { section: 'AAR' }),
+    ]);
+    setEvents(evts);
+    setCampaigns(c);
+    setPermissions(perms[0] || null);
+    setLoading(false);
+  };
 
 
   const canSubmitAAR = () => {
     if (!user || !currentMember) return false;
-    if (user.role === "admin") return true;
+    if (user.publicMetadata?.role === "admin") return true;
     if (!permissions?.allowed_roles || permissions.allowed_roles.length === 0) return false;
     const userRoles = currentMember.discord_roles || [];
     return userRoles.some(role => permissions.allowed_roles.includes(role));

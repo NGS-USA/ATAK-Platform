@@ -7,7 +7,9 @@ import { format } from "date-fns";
 const statusColors = { Pending: "#f59e0b", Approved: "#4ade80", Denied: "#ef4444" };
 
 export default function Recruitment() {
-  const [user, setUser] = useState(null);
+  const { user } = useUser();
+  const isAdmin = user?.publicMetadata?.role === "admin";
+  const { redirectToSignIn } = useClerk();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -27,14 +29,10 @@ export default function Recruitment() {
   useEffect(() => { load(); }, []);
 
   const load = async () => {
-    // user now comes from Clerk's useUser() hook
-// Add this at the top of the Recruitment component function:
-// const { user } = useUser();
-// const isAdmin = user?.publicMetadata?.role === 'admin';
-if (isAdmin) {
-  const apps = await db.list('Application', '-created_date', 100);
-  setApplications(apps);
-}
+    if (isAdmin) {
+      const apps = await db.list('Application', '-created_date', 100);
+      setApplications(apps);
+    }
     setLoading(false);
   };
 
