@@ -1,10 +1,8 @@
-import { useClerk } from "@clerk/clerk-react";
-import { Shield, Users, Target, ChevronRight } from "lucide-react";
 import { useClerk, useUser } from "@clerk/clerk-react";
+import { Shield, Users, Target, ChevronRight } from "lucide-react";
 
 export default function About() {
   const { user } = useUser();
-  const { redirectToSignIn } = useClerk();
   const { redirectToSignIn } = useClerk();
   const handleJoinClick = () => {
     if (user) {
