@@ -26,7 +26,7 @@ const UserNotRegisteredError = () => {
         </div>
         <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
           <button
-            onClick={() => window.location.href = '/Recruitment'}
+            onClick={() => window.location.href = '/Recruitment?apply=true'}
             style={{ background: "#4ade80", color: "#000", border: "none", borderRadius: "8px", padding: "10px 20px", cursor: "pointer", fontWeight: 600, fontSize: "0.875rem" }}>
             Apply to Join
           </button>

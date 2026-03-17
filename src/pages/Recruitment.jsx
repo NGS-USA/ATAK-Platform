@@ -26,7 +26,13 @@ export default function Recruitment() {
     experience: "",
   });
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('apply') === 'true') {
+      setShowForm(true);
+    }
+  }, []);
 
   const load = async () => {
     if (isAdmin) {

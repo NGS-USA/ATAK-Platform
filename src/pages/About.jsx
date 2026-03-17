@@ -1,10 +1,17 @@
 import { useClerk } from "@clerk/clerk-react";
 import { Shield, Users, Target, ChevronRight } from "lucide-react";
+import { useClerk, useUser } from "@clerk/clerk-react";
 
 export default function About() {
+  const { user } = useUser();
+  const { redirectToSignIn } = useClerk();
   const { redirectToSignIn } = useClerk();
   const handleJoinClick = () => {
-    redirectToSignIn();
+    if (user) {
+      window.location.href = '/Recruitment';
+    } else {
+      redirectToSignIn();
+    }
   };
 
   return (
