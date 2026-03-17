@@ -65,8 +65,6 @@ export default function Recruitment() {
     </div>
   );
 
-  const isAdmin = user.role === "admin";
-
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
