@@ -27,18 +27,15 @@ export default function Roster() {
 
   useEffect(() => { load(); }, []);
 
-  const load = async () => {
-    const { user } = useUser();  // from Clerk — add this at the top of the component
+const load = async () => {
     const [m] = await Promise.all([
       db.list('Member', '-join_date', 500),
-]);
-
+    ]);
     setMembers(m);
-    setUser(u);
     setLoading(false);
   };
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.publicMetadata?.role === "admin";
 
   const applyStatusChange = async () => {
     const { member, newStatus } = confirmStatus;
