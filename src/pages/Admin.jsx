@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/clerk-react";
 import { useState, useEffect } from "react";
 import { db } from "@/api/apiClient";
 import { Shield, AlertTriangle, Plus, Save, Activity } from "lucide-react";
@@ -6,7 +5,6 @@ import { logAction } from "../components/auditLog";
 import { format } from "date-fns";
 import { ELEMENTS, POSITIONS_BY_ELEMENT } from "../components/constants/elements";
 import { QUALIFICATIONS } from "../components/constants/qualifications";
-import { useUser } from "@clerk/clerk-react";
 
 const SECTIONS = ["dashboard", "events", "campaigns", "roster", "training", "recruitment", "disciplinary", "admin"];
 
