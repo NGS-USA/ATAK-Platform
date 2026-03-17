@@ -3,16 +3,6 @@ const { MongoClient, ObjectId } = require('mongodb');
 const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = 'atak-platform';
 
-let cachedClient = null;
-
-async function getDb() {
-  if (!cachedClient) {
-    cachedClient = new MongoClient(MONGODB_URI);
-    await cachedClient.connect();
-  }
-  return cachedClient.db(DB_NAME);
-}
-
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -25,11 +15,15 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers, body: '' };
   }
 
-  try {
-    const db = await getDb();
+  const client = new MongoClient(MONGODB_URI);
 
-    // Path format: /api/entities/EntityName or /api/entities/EntityName/id
-    const path = event.path.replace('/.netlify/functions/entities', '').replace('/api/entities', '');
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+
+    const path = event.path
+      .replace('/.netlify/functions/entities', '')
+      .replace('/api/entities', '');
     const parts = path.split('/').filter(Boolean);
     const entity = parts[0];
     const id = parts[1];
@@ -40,12 +34,10 @@ exports.handler = async (event) => {
 
     const collection = db.collection(entity);
 
-    // GET — list or filter
     if (event.httpMethod === 'GET') {
       const params = event.queryStringParameters || {};
 
       if (id) {
-        // Get single record by id
         let doc;
         try { doc = await collection.findOne({ _id: new ObjectId(id) }); } catch {}
         if (!doc) doc = await collection.findOne({ id });
@@ -53,28 +45,26 @@ exports.handler = async (event) => {
         return { statusCode: 200, headers, body: JSON.stringify(normalise(doc)) };
       }
 
-      // Build filter from query params (exclude sort/limit)
       const { sort, limit, ...filterParams } = params;
       const filter = {};
       for (const [key, val] of Object.entries(filterParams)) {
         filter[key] = val;
       }
 
-      const cursor = collection.find(filter);
+      let cursor = collection.find(filter);
 
       if (sort) {
         const direction = sort.startsWith('-') ? -1 : 1;
         const field = sort.replace(/^-/, '');
-        cursor.sort({ [field]: direction });
+        cursor = cursor.sort({ [field]: direction });
       }
 
-      if (limit) cursor.limit(parseInt(limit));
+      if (limit) cursor = cursor.limit(parseInt(limit));
 
       const docs = await cursor.toArray();
       return { statusCode: 200, headers, body: JSON.stringify(docs.map(normalise)) };
     }
 
-    // POST — create
     if (event.httpMethod === 'POST') {
       const data = JSON.parse(event.body || '{}');
       data.created_date = new Date().toISOString();
@@ -84,12 +74,12 @@ exports.handler = async (event) => {
       return { statusCode: 201, headers, body: JSON.stringify(normalise(created)) };
     }
 
-    // PATCH — update
     if (event.httpMethod === 'PATCH') {
       if (!id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'No id provided' }) };
       const data = JSON.parse(event.body || '{}');
       data.updated_date = new Date().toISOString();
       delete data._id;
+      delete data.id;
 
       let filter;
       try { filter = { _id: new ObjectId(id) }; } catch { filter = { id }; }
@@ -99,7 +89,6 @@ exports.handler = async (event) => {
       return { statusCode: 200, headers, body: JSON.stringify(normalise(updated)) };
     }
 
-    // DELETE
     if (event.httpMethod === 'DELETE') {
       if (!id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'No id provided' }) };
 
@@ -115,10 +104,11 @@ exports.handler = async (event) => {
   } catch (err) {
     console.error('Entities function error:', err);
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
+  } finally {
+    await client.close();
   }
 };
 
-// Converts MongoDB _id to id so the frontend can use it normally
 function normalise(doc) {
   if (!doc) return doc;
   const { _id, ...rest } = doc;
