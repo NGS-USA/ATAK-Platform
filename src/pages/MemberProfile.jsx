@@ -3,10 +3,12 @@ import { db } from "@/api/apiClient";
 import { format, differenceInDays, differenceInMonths, startOfYear, eachDayOfInterval, endOfYear } from "date-fns";
 import { User, Calendar, TrendingUp, Award, Star, Plus, X } from "lucide-react";
 import { QUALIFICATIONS } from "../components/constants/qualifications";
+import { useUser } from "@clerk/clerk-react";
 
 const statusColors = { Active: "#4ade80", Inactive: "#94a3b8", LOA: "#f59e0b", Discharged: "#ef4444" };
 
 export default function MemberProfile() {
+  const { user: clerkUser } = useUser();
   const [member, setMember] = useState(null);
   const [attendances, setAttendances] = useState([]);
   const [trainingRecords, setTrainingRecords] = useState([]);
@@ -31,16 +33,19 @@ export default function MemberProfile() {
 
   const loadData = async () => {
     try {
-      setCurrentUser(user);
+      setCurrentUser(clerkUser);
 
       let m;
       if (isMe) {
-  const members = await db.filter('Member', { user_id: user.id });
-  m = members[0];
-} else if (memberId) {
-  const all = await db.filter('Member', { id: memberId });
-  m = all[0];
-}
+        const discordAccount = clerkUser?.externalAccounts?.find(a => a.provider === 'discord');
+        const discordUsername = discordAccount?.username;
+        if (discordUsername) {
+          const members = await db.filter('Member', { discord_username: discordUsername });
+          m = members[0];
+        }
+      } else if (memberId) {
+        m = await db.get('Member', memberId);
+      }
 
       if (m) {
        setMember(m);
@@ -166,7 +171,7 @@ export default function MemberProfile() {
   const quals = getMemberQuals();
   const joinDate = member.join_date ? new Date(member.join_date) : null;
   const timeInService = joinDate ? differenceInMonths(new Date(), joinDate) : 0;
-  const canEdit = currentUser && (member.user_id === currentUser.id || currentUser.role === "admin");
+  const canEdit = currentUser && currentUser?.publicMetadata?.role === "admin";
   
   const canEditQuals = () => {
     if (currentUser?.role === "admin") return true;
