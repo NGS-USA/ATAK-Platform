@@ -35,7 +35,7 @@ const AuthenticatedApp = () => {
 
   // Determine if this visitor is unauthenticated or unregistered
   const isBlocked =
-    (!isLoadingAuth && !isAuthenticated) ||
+    !isAuthenticated ||
     (authError?.type === 'user_not_registered');
 
   // If blocked and trying to visit the root / home, redirect to About
