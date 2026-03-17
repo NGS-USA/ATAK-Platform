@@ -18,9 +18,8 @@ export default function Layout({ children, currentPageName }) {
   const [theme, setTheme] = useState(null);
 
   useEffect(() => {
-    loadUser();
-    loadTheme();
-  }, []);
+  loadTheme();
+}, []);
 
   const loadTheme = async () => {
     try {

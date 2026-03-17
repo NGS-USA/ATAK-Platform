@@ -1,19 +1,16 @@
 import axios from 'axios';
 
-// This connects your app to your own backend API
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: '/.netlify/functions',
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Automatically attach the user's auth token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('clerk-token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Generic helpers for each database operation
 export const db = {
   list:   (entity, sort, limit) => api.get(`/entities/${entity}`, { params: { sort, limit } }).then(r => r.data),
   filter: (entity, query)       => api.get(`/entities/${entity}`, { params: query }).then(r => r.data),
