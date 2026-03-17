@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useUser, useClerk } from "@clerk/clerk-react";
+import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/api/apiClient";
 import {
   Home, Users, Calendar, Flag, Shield, BookOpen,
@@ -12,6 +13,7 @@ import {
 export default function Layout({ children, currentPageName }) {
   const { user } = useUser();
   const { signOut, redirectToSignIn } = useClerk();
+  const { member } = useAuth();
   const [darkMode, setDarkMode] = useState(true);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
