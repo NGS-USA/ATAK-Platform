@@ -4,6 +4,7 @@ import { db } from "@/api/apiClient";
 import { logAction } from "../auditLog";
 import { RANKS } from "./ranks";
 import { ELEMENTS, POSITIONS_BY_ELEMENT } from "../constants/elements";
+import ImageUpload from "../ImageUpload";
 
 export default function EditMemberModal({ member, onClose, onSaved, onDeleted }) {
   const [form, setForm] = useState({ ...member });
@@ -31,6 +32,7 @@ export default function EditMemberModal({ member, onClose, onSaved, onDeleted })
     if (form.element !== member.element) changes.push(`Element: ${member.element || "None"} → ${form.element || "None"}`);
     if (form.position !== member.position) changes.push(`Position: ${member.position || "None"} → ${form.position || "None"}`);
     if (form.direct_superior_name !== member.direct_superior_name) changes.push(`Superior: ${member.direct_superior_name || "None"} → ${form.direct_superior_name || "None"}`);
+    if (form.avatar_url !== member.avatar_url) changes.push(`Avatar updated`);
     logAction({ action: "UPDATE_MEMBER", target: form.unit_name, details: changes.length ? changes.join(" | ") : "No tracked changes", section: "Roster" });
     setSaving(false);
     onSaved();
@@ -52,6 +54,27 @@ export default function EditMemberModal({ member, onClose, onSaved, onDeleted })
         </div>
 
         <div style={{ padding: "1.5rem" }}>
+
+          {/* Avatar Upload */}
+          <div style={{ marginBottom: "1.5rem", paddingBottom: "1.5rem", borderBottom: "1px solid var(--border)" }}>
+            <label style={{ fontSize: "0.75rem", color: "var(--text-secondary)", display: "block", marginBottom: "10px" }}>Member Avatar</label>
+            <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+              <div style={{ width: "72px", height: "72px", borderRadius: "50%", background: "linear-gradient(135deg, var(--accent), #16a34a)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                {form.avatar_url
+                  ? <img src={form.avatar_url} alt="Avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <span style={{ fontSize: "1.5rem", fontWeight: 700, color: "#000" }}>{form.unit_name?.[0] || "?"}</span>
+                }
+              </div>
+              <ImageUpload
+                label="Upload Avatar"
+                folder="atak-platform/avatars"
+                currentUrl={null}
+                onUpload={(url) => setForm({ ...form, avatar_url: url })}
+                transformation={[{ width: 200, height: 200, crop: "fill", gravity: "face" }, { quality: "auto:good" }]}
+              />
+            </div>
+          </div>
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             {[
               { label: "Unit Name", key: "unit_name" },
