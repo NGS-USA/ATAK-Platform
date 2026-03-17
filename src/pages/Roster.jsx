@@ -8,6 +8,7 @@ import { logAction } from "../components/auditLog";
 import AddMemberModal from "../components/roster/AddMemberModal";
 import EditMemberModal from "../components/roster/EditMemberModal";
 import { formatMemberName, getRankLabel } from "../components/roster/ranks";
+import { useUser } from "@clerk/clerk-react";
 
 const statusColors = { Active: "#4ade80", Inactive: "#94a3b8", LOA: "#f59e0b", Discharged: "#ef4444" };
 const STATUSES = ["Active", "Inactive", "LOA", "Discharged"];
@@ -18,7 +19,7 @@ export default function Roster() {
   const [filter, setFilter] = useState("Active");
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("roster");
-  const [user, setUser] = useState(null);
+  const { user } = useUser();
   const [loaMember, setLoaMember] = useState(null);
   const [showAddMember, setShowAddMember] = useState(false);
   const [confirmStatus, setConfirmStatus] = useState(null); // { member, newStatus }

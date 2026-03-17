@@ -4,6 +4,7 @@ import { db } from "@/api/apiClient";
 import { BookOpen, Plus, Check, Search } from "lucide-react";
 import { format } from "date-fns";
 import { QUALIFICATIONS } from "../components/constants/qualifications";
+import { useUser } from "@clerk/clerk-react";
 
 export default function Training() {
   const [records, setRecords] = useState([]);
@@ -20,11 +21,18 @@ export default function Training() {
   useEffect(() => { load(); }, []);
 
   const load = async () => {
-    try {
-      const [m, r] = await Promise.all([
+  try {
+    const [m, r] = await Promise.all([
       db.filter('Member', { status: 'Active' }),
       db.list('TrainingRecord', '-training_date', 30),
-]);
+    ]);
+    setRecords(r);
+    setMembers(m);
+  } catch (err) {
+    console.error("Failed to load training data:", err);
+  }
+  setLoading(false);
+};
       setRecords(r);
       setMembers(m);
       setUser(u);
