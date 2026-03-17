@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/api/apiClient";
 import { Shield, AlertTriangle, Plus, Save, Activity } from "lucide-react";
 import { logAction } from "../components/auditLog";
@@ -43,7 +44,7 @@ function RoleMultiSelect({ value = [], options, onChange }) {
 
 export default function Admin() {
   const { user } = useUser();
-  const isAdmin = user?.publicMetadata?.role === "admin";
+  const { isAdmin } = useAuth();
   const [tab, setTab] = useState("da");
   const [members, setMembers] = useState([]);
   const [das, setDas] = useState([]);
@@ -129,10 +130,11 @@ const [m, d, p, t, al] = await Promise.all([
 
   const savePermission = async (section, field, value) => {
     const existing = perms.find(p => p.section === section);
+    const roles = Array.isArray(value) ? value : value.split(",").map(v => v.trim()).filter(Boolean);
     if (existing) {
-      await db.update('PermissionConfig', existing.id, { [field]: value.split(",").map(v => v.trim()).filter(Boolean) });
+      await db.update('PermissionConfig', existing.id, { [field]: roles });
     } else {
-      await db.create('PermissionConfig', { section, [field]: value.split(",").map(v => v.trim()).filter(Boolean) });
+      await db.create('PermissionConfig', { section, [field]: roles });
     }
     load();
   };
@@ -307,7 +309,7 @@ const [m, d, p, t, al] = await Promise.all([
                       <RoleMultiSelect
                         value={perm.viewer_roles || []}
                         options={discordRoles}
-                        onChange={val => savePermission(section, "viewer_roles", val.join(","))}
+                        onChange={val => savePermission(section, "viewer_roles", val)}
                       />
                     </div>
                     <div>
@@ -315,7 +317,7 @@ const [m, d, p, t, al] = await Promise.all([
                       <RoleMultiSelect
                         value={perm.allowed_roles || []}
                         options={discordRoles}
-                        onChange={val => savePermission(section, "allowed_roles", val.join(","))}
+                        onChange={val => savePermission(section, "allowed_roles", val)}
                       />
                     </div>
                   </div>

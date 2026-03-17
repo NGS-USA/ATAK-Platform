@@ -15,6 +15,7 @@ const statusColors = { Upcoming: "#4ade80", Active: "#f59e0b", Completed: "#94a3
 
 export default function Events() {
   const { user } = useUser();
+  const { isAdmin, hasPermission } = useAuth();
   const [events, setEvents] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);

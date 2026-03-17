@@ -6,12 +6,14 @@ import { format } from "date-fns";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/lib/AuthContext";
 import ImageUpload from "../components/ImageUpload";
 
 const statusColors = { Active: "#4ade80", Completed: "#94a3b8", Paused: "#f59e0b" };
 
 export default function Campaigns() {
   const { user } = useUser();
+  const { isAdmin, hasPermission } = useAuth();
   const [campaigns, setCampaigns] = useState([]);
   const [events, setEvents] = useState([]);
   const [aars, setAars] = useState([]);
@@ -42,7 +44,7 @@ export default function Campaigns() {
     return { total: linked.length, completed: completed.length };
   };
 
-  const canEdit = user?.publicMetadata?.role === "admin";
+  const canEdit = isAdmin || hasPermission('campaigns');
 
   const save = async () => {
     if (editing) {

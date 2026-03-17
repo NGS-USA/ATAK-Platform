@@ -13,7 +13,7 @@ import {
 export default function Layout({ children, currentPageName }) {
   const { user } = useUser();
   const { signOut, redirectToSignIn } = useClerk();
-  const { member } = useAuth();
+  const { member, refreshRoles } = useAuth();
   const [darkMode, setDarkMode] = useState(true);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -151,7 +151,7 @@ export default function Layout({ children, currentPageName }) {
                     <Link to={createPageUrl("MemberProfile") + "?me=true"} onClick={() => setProfileOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", textDecoration: "none", color: lightText, fontSize: "0.9rem" }} className="nav-link">
                       <User size={16} /> My Profile
                     </Link>
-                    <button onClick={() => setProfileOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", background: "none", border: "none", color: lightText, cursor: "pointer", width: "100%", fontSize: "0.9rem" }} className="nav-link">
+                    <button onClick={async () => { setProfileOpen(false); await refreshRoles(); }} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", background: "none", border: "none", color: lightText, cursor: "pointer", width: "100%", fontSize: "0.9rem" }} className="nav-link">
                       <RefreshCw size={16} /> Refresh Permissions
                     </button>
                     <div style={{ height: "1px", background: lightBorder }} />
