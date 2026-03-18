@@ -9,6 +9,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import ReactMarkdown from "react-markdown";
 import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/lib/AuthContext";
 
 const typeColors = { Operation: "#3b82f6", Training: "#f59e0b", Meeting: "#8b5cf6", Other: "#64748b" };
 const statusColors = { Upcoming: "#4ade80", Active: "#f59e0b", Completed: "#94a3b8", Cancelled: "#ef4444" };
@@ -45,14 +46,12 @@ export default function Events() {
 
 
   const canSubmitAAR = () => {
-    if (!user || !currentMember) return false;
-    if (user.publicMetadata?.role === "admin") return true;
-    if (!permissions?.allowed_roles || permissions.allowed_roles.length === 0) return false;
-    const userRoles = currentMember.discord_roles || [];
-    return userRoles.some(role => permissions.allowed_roles.includes(role));
+    if (!user) return false;
+    if (isAdmin) return true;
+    return hasPermission('AAR');
   };
 
-  const canEdit = user?.role === "admin";
+  const canEdit = isAdmin || hasPermission('events');
 
   const save = async () => {
     if (editing) {

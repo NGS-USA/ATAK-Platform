@@ -4,11 +4,13 @@ import { format, differenceInDays, differenceInMonths, startOfYear, eachDayOfInt
 import { User, Calendar, TrendingUp, Award, Star, Plus, X } from "lucide-react";
 import { QUALIFICATIONS } from "../components/constants/qualifications";
 import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/lib/AuthContext";
 
 const statusColors = { Active: "#4ade80", Inactive: "#94a3b8", LOA: "#f59e0b", Discharged: "#ef4444" };
 
 export default function MemberProfile() {
   const { user: clerkUser } = useUser();
+  const { isAdmin, hasPermission } = useAuth();
   const [member, setMember] = useState(null);
   const [attendances, setAttendances] = useState([]);
   const [trainingRecords, setTrainingRecords] = useState([]);
@@ -171,13 +173,11 @@ export default function MemberProfile() {
   const quals = getMemberQuals();
   const joinDate = member.join_date ? new Date(member.join_date) : null;
   const timeInService = joinDate ? differenceInMonths(new Date(), joinDate) : 0;
-  const canEdit = currentUser && currentUser?.publicMetadata?.role === "admin";
-  
+  const canEdit = isAdmin;
+
   const canEditQuals = () => {
-    if (currentUser?.role === "admin") return true;
-    if (!rosterPerms?.allowed_roles) return false;
-    const userRoles = currentMember?.discord_roles || [];
-    return userRoles.some(role => rosterPerms.allowed_roles.includes(role));
+    if (isAdmin) return true;
+    return hasPermission('roster');
   };
 
   return (

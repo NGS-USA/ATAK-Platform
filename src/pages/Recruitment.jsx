@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "@/api/apiClient";
 import { useUser, useClerk } from "@clerk/clerk-react";
+import { useAuth } from "@/lib/AuthContext";
 import { UserPlus, Check, X, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 
@@ -8,7 +9,8 @@ const statusColors = { Pending: "#f59e0b", Approved: "#4ade80", Denied: "#ef4444
 
 export default function Recruitment() {
   const { user } = useUser();
-  const isAdmin = user?.publicMetadata?.role === "admin";
+  const { isAdmin, hasPermission } = useAuth();
+  const canApprove = isAdmin || hasPermission('recruitment');
   const { redirectToSignIn } = useClerk();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +37,7 @@ export default function Recruitment() {
   }, []);
 
   const load = async () => {
-    if (isAdmin) {
+    if (canApprove) {
       const apps = await db.list('Application', '-created_date', 100);
       setApplications(apps);
     }
@@ -162,7 +164,7 @@ export default function Recruitment() {
       )}
 
       {/* Admin View */}
-      {isAdmin && (
+      {canApprove && (
         <div>
           <div style={{ display: "flex", gap: "8px", marginBottom: "1.25rem" }}>
             {["all", "Pending", "Approved", "Denied"].map(s => (

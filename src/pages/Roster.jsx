@@ -9,6 +9,7 @@ import AddMemberModal from "../components/roster/AddMemberModal";
 import EditMemberModal from "../components/roster/EditMemberModal";
 import { formatMemberName, getRankLabel } from "../components/roster/ranks";
 import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/lib/AuthContext";
 
 const statusColors = { Active: "#4ade80", Inactive: "#94a3b8", LOA: "#f59e0b", Discharged: "#ef4444" };
 const STATUSES = ["Active", "Inactive", "LOA", "Discharged"];
@@ -20,6 +21,7 @@ export default function Roster() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("roster");
   const { user } = useUser();
+  const { isAdmin, hasPermission } = useAuth();
   const [loaMember, setLoaMember] = useState(null);
   const [showAddMember, setShowAddMember] = useState(false);
   const [confirmStatus, setConfirmStatus] = useState(null); // { member, newStatus }
@@ -35,7 +37,7 @@ const load = async () => {
     setLoading(false);
   };
 
-  const isAdmin = user?.publicMetadata?.role === "admin";
+  const canEdit = isAdmin || hasPermission('roster');
 
   const applyStatusChange = async () => {
     const { member, newStatus } = confirmStatus;
@@ -70,7 +72,7 @@ const load = async () => {
           )}
         </div>
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          {isAdmin && (
+          {canEdit && (
             <button onClick={() => setShowAddMember(true)} style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--accent)", color: "#000", border: "none", borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontWeight: 600, fontSize: "0.875rem" }}>
               <Plus size={15} /> Add Member
             </button>
@@ -117,7 +119,7 @@ const load = async () => {
                   <td style={{ padding: "10px 16px", fontSize: "0.875rem", color: "var(--text-secondary)" }}>{getRankLabel(m.rank)}</td>
                   <td style={{ padding: "10px 16px", fontSize: "0.875rem", color: "var(--text-secondary)" }}>{m.element || "—"}</td>
                   <td style={{ padding: "10px 16px" }}>
-                    {isAdmin ? (
+                    {canEdit ? (
                       <select
                         value={m.status}
                         onChange={e => {
@@ -144,7 +146,7 @@ const load = async () => {
                       <Link to={createPageUrl("MemberProfile") + `?id=${m.id}`} style={{ display: "flex", alignItems: "center", gap: "4px", color: "var(--accent)", textDecoration: "none", fontSize: "0.8rem" }}>
                         View <ChevronRight size={14} />
                       </Link>
-                      {isAdmin && (
+                      {canEdit && (
                         <button onClick={() => setEditingMember(m)} style={{ display: "flex", alignItems: "center", gap: "4px", background: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", color: "var(--text-secondary)", fontSize: "0.8rem" }}>
                           <Edit2 size={12} /> Edit
                         </button>

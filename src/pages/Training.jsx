@@ -1,4 +1,5 @@
 import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/lib/AuthContext";
 import { useState, useEffect } from "react";
 import { db } from "@/api/apiClient";
 import { BookOpen, Plus, Check, Search } from "lucide-react";
@@ -10,6 +11,7 @@ export default function Training() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useUser();
+  const { isAdmin, hasPermission } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ qualification: "", qualification_category: "Standard", training_date: "", notes: "", passed_names: [], failed_names: [] });
   const [selectedPassed, setSelectedPassed] = useState([]);
@@ -33,7 +35,7 @@ export default function Training() {
     setLoading(false);
   };
 
-  const canSubmit = user?.publicMetadata?.role === "admin";
+  const canSubmit = isAdmin || hasPermission('training');
 
   const save = async () => {
     await db.create('TrainingRecord', {
