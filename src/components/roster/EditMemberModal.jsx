@@ -10,6 +10,28 @@ export default function EditMemberModal({ member, onClose, onSaved, onDeleted })
   const [form, setForm] = useState({ ...member });
   const [allMembers, setAllMembers] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [linkUrl, setLinkUrl] = useState(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
+
+  const generateLink = async () => {
+    setGeneratingLink(true);
+    try {
+      const res = await fetch('/.netlify/functions/linkToken', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ member_id: form.id, member_name: form.unit_name }),
+      });
+      const data = await res.json();
+      if (data.token) {
+        setLinkUrl(`${window.location.origin}/LinkAccount?token=${data.token}`);
+      } else {
+        alert('Failed to generate link: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+    setGeneratingLink(false);
+  };
 
   useEffect(() => {
     db.list('Member').then(setAllMembers);
@@ -73,6 +95,52 @@ export default function EditMemberModal({ member, onClose, onSaved, onDeleted })
                 transformation={[{ width: 200, height: 200, crop: "fill", gravity: "face" }, { quality: "auto:good" }]}
               />
             </div>
+          </div>
+
+          {/* Discord Link Status */}
+          <div style={{ marginBottom: "1.5rem", paddingBottom: "1.5rem", borderBottom: "1px solid var(--border)" }}>
+            <label style={{ fontSize: "0.75rem", color: "var(--text-secondary)", display: "block", marginBottom: "10px" }}>Discord Account</label>
+            {form.discord_username ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "#4ade8015", border: "1px solid #4ade8040", borderRadius: "8px", padding: "8px 14px" }}>
+                  <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#4ade80" }} />
+                  <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#4ade80" }}>Linked — {form.discord_username}</span>
+                </div>
+                <button
+                  onClick={generateLink}
+                  disabled={generatingLink}
+                  style={{ background: "var(--bg-secondary)", color: "var(--text-secondary)", border: "1px solid var(--border)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", fontSize: "0.75rem" }}
+                >
+                  {generatingLink ? "Generating..." : "Regenerate Link"}
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "#ef444415", border: "1px solid #ef444440", borderRadius: "8px", padding: "8px 14px" }}>
+                  <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#ef4444" }} />
+                  <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#ef4444" }}>Not Linked</span>
+                </div>
+                <button
+                  onClick={generateLink}
+                  disabled={generatingLink}
+                  style={{ background: "var(--accent)", color: "#000", border: "none", borderRadius: "6px", padding: "6px 14px", cursor: generatingLink ? "not-allowed" : "pointer", fontWeight: 600, fontSize: "0.8rem", opacity: generatingLink ? 0.6 : 1 }}
+                >
+                  {generatingLink ? "Generating..." : "Generate Link"}
+                </button>
+              </div>
+            )}
+            {linkUrl && (
+              <div style={{ marginTop: "12px", background: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "8px", padding: "12px" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Share this link with the member — expires in 24 hours, one use only:</div>
+                <div style={{ fontSize: "0.75rem", color: "var(--accent)", fontFamily: "monospace", wordBreak: "break-all", marginBottom: "10px" }}>{linkUrl}</div>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(linkUrl); }}
+                  style={{ background: "var(--accent)", color: "#000", border: "none", borderRadius: "6px", padding: "6px 16px", cursor: "pointer", fontWeight: 600, fontSize: "0.8rem" }}
+                >
+                  Copy Link
+                </button>
+              </div>
+            )}
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
