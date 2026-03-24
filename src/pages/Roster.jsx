@@ -38,6 +38,7 @@ const load = async () => {
   };
 
   const canEdit = isAdmin || hasPermission('roster');
+  const canEditOrbat = isAdmin || hasPermission('orbat');
 
   const applyStatusChange = async () => {
     const { member, newStatus } = confirmStatus;
@@ -172,12 +173,24 @@ const load = async () => {
         const ELEMENTS = Object.keys(POSITIONS_BY_ELEMENT);
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            {canEditOrbat && (
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button style={{ background: "var(--accent)", color: "#000", border: "none", borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontWeight: 600, fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Plus size={15} /> Add Element
+                </button>
+              </div>
+            )}
             {ELEMENTS.map(element => {
               const positions = POSITIONS_BY_ELEMENT[element];
               return (
                 <div key={element} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "12px", overflow: "hidden" }}>
-                  <div style={{ padding: "10px 16px", borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
+                  <div style={{ padding: "10px 16px", borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <span style={{ fontWeight: 700, fontSize: "0.875rem", letterSpacing: "0.05em" }}>{element.toUpperCase()}</span>
+                    {canEditOrbat && (
+                      <button style={{ background: "var(--accent)", color: "#000", border: "none", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", fontWeight: 600, fontSize: "0.75rem" }}>
+                        + Add Position
+                      </button>
+                    )}
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "1px", background: "var(--border)" }}>
                     {positions.map(pos => {
