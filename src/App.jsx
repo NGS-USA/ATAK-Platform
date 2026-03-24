@@ -16,7 +16,7 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   : <>{children}</>;
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated, member } = useAuth();
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -33,10 +33,11 @@ const AuthenticatedApp = () => {
   const isAboutPage = window.location.pathname === '/About';
   const isPublicPage = isRecruitmentPage || isLinkPage || isAboutPage;
 
-  // Determine if this visitor is unauthenticated or unregistered
+  // Determine if this visitor is unauthenticated or unregistered or unlinked
   const isBlocked =
     !isAuthenticated ||
-    (authError?.type === 'user_not_registered');
+    (authError?.type === 'user_not_registered') ||
+    (isAuthenticated && !member);
 
   // If blocked and trying to visit the root / home, redirect to About
   if (isBlocked && window.location.pathname === '/') {
