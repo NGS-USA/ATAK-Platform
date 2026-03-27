@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { db } from "@/api/apiClient";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Users, Search, ChevronRight, Plus, Edit2 } from "lucide-react";
+import { Users, Search, ChevronRight, Plus, Edit2, X, Trash2 } from "lucide-react";
 import LOAModal from "../components/roster/LOAModal";
 import { logAction } from "../components/auditLog";
 import AddMemberModal from "../components/roster/AddMemberModal";
@@ -16,6 +16,7 @@ const STATUSES = ["Active", "Inactive", "LOA", "Discharged"];
 
 export default function Roster() {
   const [members, setMembers] = useState([]);
+  const [orbatElements, setOrbatElements] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("Active");
   const [loading, setLoading] = useState(true);
@@ -24,16 +25,27 @@ export default function Roster() {
   const { isAdmin, hasPermission } = useAuth();
   const [loaMember, setLoaMember] = useState(null);
   const [showAddMember, setShowAddMember] = useState(false);
-  const [confirmStatus, setConfirmStatus] = useState(null); // { member, newStatus }
+  const [confirmStatus, setConfirmStatus] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
+
+  // Orbat modals
+  const [showAddElement, setShowAddElement] = useState(false);
+  const [showAddPosition, setShowAddPosition] = useState(null); // element object
+  const [showEditElement, setShowEditElement] = useState(null); // element object
+  const [newElementName, setNewElementName] = useState("");
+  const [newPositionName, setNewPositionName] = useState("");
+  const [editElementName, setEditElementName] = useState("");
+  const [savingOrbat, setSavingOrbat] = useState(false);
 
   useEffect(() => { load(); }, []);
 
-const load = async () => {
-    const [m] = await Promise.all([
+  const load = async () => {
+    const [m, el] = await Promise.all([
       db.list('Member', '-join_date', 500),
+      db.list('OrbatElement', 'order', 100),
     ]);
     setMembers(m);
+    setOrbatElements(el);
     setLoading(false);
   };
 
@@ -48,18 +60,64 @@ const load = async () => {
     load();
   };
 
+  const addElement = async () => {
+    if (!newElementName.trim()) return;
+    setSavingOrbat(true);
+    await db.create('OrbatElement', {
+      name: newElementName.trim(),
+      order: orbatElements.length + 1,
+      positions: [],
+    });
+    logAction({ action: "CREATE_ORBAT_ELEMENT", target: newElementName.trim(), details: "", section: "Roster" });
+    setNewElementName("");
+    setShowAddElement(false);
+    setSavingOrbat(false);
+    load();
+  };
+
+  const deleteElement = async (element) => {
+    if (!confirm(`Delete element "${element.name}"? This will not delete the members assigned to it.`)) return;
+    await db.delete('OrbatElement', element.id);
+    logAction({ action: "DELETE_ORBAT_ELEMENT", target: element.name, details: "", section: "Roster" });
+    load();
+  };
+
+  const saveEditElement = async () => {
+    if (!editElementName.trim()) return;
+    setSavingOrbat(true);
+    await db.update('OrbatElement', showEditElement.id, { name: editElementName.trim() });
+    logAction({ action: "RENAME_ORBAT_ELEMENT", target: editElementName.trim(), details: `Was: ${showEditElement.name}`, section: "Roster" });
+    setShowEditElement(null);
+    setEditElementName("");
+    setSavingOrbat(false);
+    load();
+  };
+
+  const addPosition = async () => {
+    if (!newPositionName.trim()) return;
+    setSavingOrbat(true);
+    const updated = [...(showAddPosition.positions || []), newPositionName.trim()];
+    await db.update('OrbatElement', showAddPosition.id, { positions: updated });
+    logAction({ action: "ADD_ORBAT_POSITION", target: newPositionName.trim(), details: `Element: ${showAddPosition.name}`, section: "Roster" });
+    setNewPositionName("");
+    setShowAddPosition(null);
+    setSavingOrbat(false);
+    load();
+  };
+
+  const deletePosition = async (element, position) => {
+    if (!confirm(`Remove position "${position}" from "${element.name}"?`)) return;
+    const updated = (element.positions || []).filter(p => p !== position);
+    await db.update('OrbatElement', element.id, { positions: updated });
+    logAction({ action: "DELETE_ORBAT_POSITION", target: position, details: `Element: ${element.name}`, section: "Roster" });
+    load();
+  };
+
   const filtered = members.filter(m => {
     const matchSearch = !search || m.unit_name?.toLowerCase().includes(search.toLowerCase()) || m.rank?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filter === "all" || m.status === filter;
     return matchSearch && matchStatus;
   });
-
-  const grouped = filtered.reduce((acc, m) => {
-    const dep = m.element || "Unassigned";
-    if (!acc[dep]) acc[dep] = [];
-    acc[dep].push(m);
-    return acc;
-  }, {});
 
   return (
     <div>
@@ -162,42 +220,35 @@ const load = async () => {
             <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)" }}>No members found</div>
           )}
         </div>
-      ) : (() => {
-        const POSITIONS_BY_ELEMENT = {
-          "Lead Element 'Viper 1'": ["Group Leader", "Group 2IC", "Operations Sergeant", "Assistant Operations Sergeant"],
-          "Tactical Element 'Viper 2'": ["Element Leader", "Element 2IC", "Element Member", "Element Combat Medic"],
-          "Tactical Element 'Viper 3'": ["Element Leader", "Element 2IC", "Element Member", "Element Combat Medic"],
-          "Support Element 'Viper 4'": ["Element Leader", "Element 2IC", "Element Member"],
-          "Support Element 'Viper 5'": ["Element Leader", "Element 2IC", "Element Member"],
-        };
-        const ELEMENTS = Object.keys(POSITIONS_BY_ELEMENT);
-        return (
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            {canEditOrbat && (
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button style={{ background: "var(--accent)", color: "#000", border: "none", borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontWeight: 600, fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <Plus size={15} /> Add Element
-                </button>
-              </div>
-            )}
-            {ELEMENTS.map(element => {
-              const positions = POSITIONS_BY_ELEMENT[element];
-              return (
-                <div key={element} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "12px", overflow: "hidden" }}>
-                  <div style={{ padding: "10px 16px", borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontWeight: 700, fontSize: "0.875rem", letterSpacing: "0.05em" }}>{element.toUpperCase()}</span>
-                    {canEditOrbat && (
-                      <button style={{ background: "var(--accent)", color: "#000", border: "none", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", fontWeight: 600, fontSize: "0.75rem" }}>
-                        + Add Position
-                      </button>
-                    )}
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          {canEditOrbat && (
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button onClick={() => setShowAddElement(true)} style={{ background: "var(--accent)", color: "#000", border: "none", borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontWeight: 600, fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "6px" }}>
+                <Plus size={15} /> Add Element
+              </button>
+            </div>
+          )}
+          {orbatElements.map(element => (
+            <div key={element.id} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "12px", overflow: "hidden" }}>
+              <div style={{ padding: "10px 16px", borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontWeight: 700, fontSize: "0.875rem", letterSpacing: "0.05em" }}>{element.name.toUpperCase()}</span>
+                {canEditOrbat && (
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button onClick={() => { setShowAddPosition(element); setNewPositionName(""); }} style={{ background: "var(--accent)", color: "#000", border: "none", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", fontWeight: 600, fontSize: "0.75rem" }}>+ Add Position</button>
+                    <button onClick={() => { setShowEditElement(element); setEditElementName(element.name); }} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", color: "var(--text-secondary)" }}><Edit2 size={12} /></button>
+                    <button onClick={() => deleteElement(element)} style={{ background: "#ef444415", border: "1px solid #ef4444", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", color: "#ef4444" }}><Trash2 size={12} /></button>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "1px", background: "var(--border)" }}>
-                    {positions.map(pos => {
-                      const m = members.find(mb => mb.element === element && mb.position === pos);
-                      return m ? (
-                        <Link key={pos} to={createPageUrl("MemberProfile") + `?id=${m.id}`} style={{ background: "var(--bg-card)", padding: "12px 16px", textDecoration: "none" }}>
-                          <div style={{ fontSize: "0.7rem", color: "var(--accent)", fontWeight: 700, letterSpacing: "0.06em", marginBottom: "4px", textTransform: "uppercase" }}>{pos}</div>
+                )}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "1px", background: "var(--border)" }}>
+                {(element.positions || []).map(pos => {
+                  const m = members.find(mb => mb.element === element.name && mb.position === pos);
+                  return (
+                    <div key={pos} style={{ background: "var(--bg-card)", padding: "12px 16px", position: "relative" }}>
+                      <div style={{ fontSize: "0.7rem", color: "var(--accent)", fontWeight: 700, letterSpacing: "0.06em", marginBottom: "4px", textTransform: "uppercase" }}>{pos}</div>
+                      {m ? (
+                        <Link to={createPageUrl("MemberProfile") + `?id=${m.id}`} style={{ textDecoration: "none" }}>
                           <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-primary)", marginBottom: "2px" }}>{formatMemberName(m)}</div>
                           <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
                             <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: statusColors[m.status] || "#94a3b8" }} />
@@ -205,48 +256,99 @@ const load = async () => {
                           </div>
                         </Link>
                       ) : (
-                        <div key={pos} style={{ background: "var(--bg-card)", padding: "12px 16px" }}>
-                          <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)", fontWeight: 700, letterSpacing: "0.06em", marginBottom: "4px", textTransform: "uppercase" }}>{pos}</div>
-                          <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)", opacity: 0.4, fontStyle: "italic" }}>TBD</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
+                        <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)", opacity: 0.4, fontStyle: "italic" }}>TBD</div>
+                      )}
+                      {canEditOrbat && (
+                        <button onClick={() => deletePosition(element, pos)} style={{ position: "absolute", top: "8px", right: "8px", background: "none", border: "none", cursor: "pointer", color: "#ef4444", opacity: 0.5, padding: "2px" }} title="Remove position">
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+                {(element.positions || []).length === 0 && (
+                  <div style={{ background: "var(--bg-card)", padding: "12px 16px", color: "var(--text-secondary)", fontSize: "0.8rem", fontStyle: "italic" }}>No positions yet</div>
+                )}
+              </div>
+            </div>
+          ))}
+          {orbatElements.length === 0 && (
+            <div style={{ textAlign: "center", padding: "3rem", color: "var(--text-secondary)" }}>No elements yet — click Add Element to get started</div>
+          )}
+        </div>
+      )}
+
+      {/* Add Element Modal */}
+      {showAddElement && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.75rem", maxWidth: "420px", width: "100%" }}>
+            <div style={{ fontWeight: 700, fontSize: "1rem", marginBottom: "1rem" }}>Add New Element</div>
+            <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)", display: "block", marginBottom: "6px" }}>Element Name</label>
+            <input value={newElementName} onChange={e => setNewElementName(e.target.value)} placeholder="e.g. Recon Element 'Viper 6'" autoFocus
+              style={{ width: "100%", background: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "6px", padding: "8px 10px", color: "var(--text-primary)", fontSize: "0.875rem", marginBottom: "1.25rem" }} />
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button onClick={addElement} disabled={savingOrbat || !newElementName.trim()} style={{ background: "var(--accent)", color: "#000", border: "none", borderRadius: "6px", padding: "8px 20px", cursor: "pointer", fontWeight: 600, flex: 1, opacity: !newElementName.trim() ? 0.5 : 1 }}>
+                {savingOrbat ? "Saving..." : "Add Element"}
+              </button>
+              <button onClick={() => setShowAddElement(false)} style={{ background: "var(--bg-secondary)", color: "var(--text-secondary)", border: "1px solid var(--border)", borderRadius: "6px", padding: "8px 20px", cursor: "pointer" }}>Cancel</button>
+            </div>
           </div>
-        );
-      })()}
+        </div>
+      )}
+
+      {/* Edit Element Modal */}
+      {showEditElement && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.75rem", maxWidth: "420px", width: "100%" }}>
+            <div style={{ fontWeight: 700, fontSize: "1rem", marginBottom: "1rem" }}>Rename Element</div>
+            <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)", display: "block", marginBottom: "6px" }}>Element Name</label>
+            <input value={editElementName} onChange={e => setEditElementName(e.target.value)} autoFocus
+              style={{ width: "100%", background: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "6px", padding: "8px 10px", color: "var(--text-primary)", fontSize: "0.875rem", marginBottom: "1.25rem" }} />
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button onClick={saveEditElement} disabled={savingOrbat || !editElementName.trim()} style={{ background: "var(--accent)", color: "#000", border: "none", borderRadius: "6px", padding: "8px 20px", cursor: "pointer", fontWeight: 600, flex: 1, opacity: !editElementName.trim() ? 0.5 : 1 }}>
+                {savingOrbat ? "Saving..." : "Save"}
+              </button>
+              <button onClick={() => setShowEditElement(null)} style={{ background: "var(--bg-secondary)", color: "var(--text-secondary)", border: "1px solid var(--border)", borderRadius: "6px", padding: "8px 20px", cursor: "pointer" }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Position Modal */}
+      {showAddPosition && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.75rem", maxWidth: "420px", width: "100%" }}>
+            <div style={{ fontWeight: 700, fontSize: "1rem", marginBottom: "4px" }}>Add Position</div>
+            <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "1rem" }}>{showAddPosition.name}</div>
+            <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)", display: "block", marginBottom: "6px" }}>Position Name</label>
+            <input value={newPositionName} onChange={e => setNewPositionName(e.target.value)} placeholder="e.g. Sniper" autoFocus
+              style={{ width: "100%", background: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "6px", padding: "8px 10px", color: "var(--text-primary)", fontSize: "0.875rem", marginBottom: "1.25rem" }} />
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button onClick={addPosition} disabled={savingOrbat || !newPositionName.trim()} style={{ background: "var(--accent)", color: "#000", border: "none", borderRadius: "6px", padding: "8px 20px", cursor: "pointer", fontWeight: 600, flex: 1, opacity: !newPositionName.trim() ? 0.5 : 1 }}>
+                {savingOrbat ? "Saving..." : "Add Position"}
+              </button>
+              <button onClick={() => setShowAddPosition(null)} style={{ background: "var(--bg-secondary)", color: "var(--text-secondary)", border: "1px solid var(--border)", borderRadius: "6px", padding: "8px 20px", cursor: "pointer" }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* LOA Modal */}
       {loaMember && (
-        <LOAModal
-          member={loaMember}
-          onClose={() => setLoaMember(null)}
-          onSaved={() => { setLoaMember(null); load(); }}
-        />
+        <LOAModal member={loaMember} onClose={() => setLoaMember(null)} onSaved={() => { setLoaMember(null); load(); }} />
       )}
 
       {/* Edit Member Modal */}
       {editingMember && (
-        <EditMemberModal
-          member={editingMember}
-          onClose={() => setEditingMember(null)}
-          onSaved={() => { setEditingMember(null); load(); }}
-          onDeleted={() => { setEditingMember(null); load(); }}
-        />
+        <EditMemberModal member={editingMember} onClose={() => setEditingMember(null)} onSaved={() => { setEditingMember(null); load(); }} onDeleted={() => { setEditingMember(null); load(); }} />
       )}
 
       {/* Add Member Modal */}
       {showAddMember && (
-        <AddMemberModal
-          onClose={() => setShowAddMember(false)}
-          onSaved={() => { setShowAddMember(false); load(); }}
-        />
+        <AddMemberModal onClose={() => setShowAddMember(false)} onSaved={() => { setShowAddMember(false); load(); }} />
       )}
 
-      {/* Status Change Confirmation Dialog */}
+      {/* Status Change Confirmation */}
       {confirmStatus && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
           <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.75rem", maxWidth: "400px", width: "100%", textAlign: "center" }}>

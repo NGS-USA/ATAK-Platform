@@ -3,12 +3,22 @@ import { X, Trash2 } from "lucide-react";
 import { db } from "@/api/apiClient";
 import { logAction } from "../auditLog";
 import { RANKS } from "./ranks";
-import { ELEMENTS, POSITIONS_BY_ELEMENT } from "../constants/elements";
 import ImageUpload from "../ImageUpload";
 
 export default function EditMemberModal({ member, onClose, onSaved, onDeleted }) {
   const [form, setForm] = useState({ ...member });
   const [allMembers, setAllMembers] = useState([]);
+  const [orbatElements, setOrbatElements] = useState([]);
+
+  useEffect(() => {
+    db.list('OrbatElement', 'order', 100).then(setOrbatElements);
+  }, []);
+
+  const ELEMENTS = orbatElements.map(e => e.name);
+  const POSITIONS_BY_ELEMENT = orbatElements.reduce((acc, e) => {
+    acc[e.name] = e.positions || [];
+    return acc;
+  }, {});
   const [saving, setSaving] = useState(false);
   const [linkUrl, setLinkUrl] = useState(null);
   const [generatingLink, setGeneratingLink] = useState(false);

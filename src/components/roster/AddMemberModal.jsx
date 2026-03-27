@@ -3,16 +3,23 @@ import { X } from "lucide-react";
 import { db } from "@/api/apiClient";
 import { logAction } from "../auditLog";
 import { RANKS } from "./ranks";
-import { ELEMENTS, POSITIONS_BY_ELEMENT } from "../constants/elements";
 
 export default function AddMemberModal({ onClose, onSaved }) {
   const [form, setForm] = useState({ unit_name: "", rank: "", position: "", element: "", discord_username: "", direct_superior_name: "", status: "Active", join_date: new Date().toISOString().split("T")[0] });
   const [saving, setSaving] = useState(false);
   const [allMembers, setAllMembers] = useState([]);
+  const [orbatElements, setOrbatElements] = useState([]);
 
   useEffect(() => {
     db.list('Member').then(setAllMembers);
+    db.list('OrbatElement', 'order', 100).then(setOrbatElements);
   }, []);
+
+  const ELEMENTS = orbatElements.map(e => e.name);
+  const POSITIONS_BY_ELEMENT = orbatElements.reduce((acc, e) => {
+    acc[e.name] = e.positions || [];
+    return acc;
+  }, {});
 
   const getAvailablePositions = () => {
     if (!form.element) return [];
